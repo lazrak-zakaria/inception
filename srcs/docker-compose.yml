@@ -1,0 +1,83 @@
+services:
+
+  nginx:
+
+    build: 
+      context: ./requirements/nginx/
+      args:
+        CERT : ${CERT}
+        CERTKEY : ${CERTKEY}
+        CERTPATH : ${CERTPATH}
+        CERTPATHCONF : ${CERTPATHCONF}
+    env_file:
+      - .env
+    restart: always
+
+    ports:
+      - "443:443"
+
+    volumes:
+      - web_data:/var/www/html
+
+    networks:
+      - my-docker-network
+
+    depends_on:
+      - wordpress
+
+  wordpress:
+
+    build:
+      context: ./requirements/wordpress/
+    
+    restart: always
+
+    env_file:
+      - .env
+
+    volumes:
+      - web_data:/var/www/html
+
+    networks:
+      - my-docker-network
+
+    depends_on:
+      - mariadb
+
+
+
+  mariadb:
+
+    build:
+      context:  ./requirements/mariadb/
+      args:
+        DBNAME : ${DBNAME}
+        DBUSER : ${DBUSER}
+        DBPASS : ${DBPASS}
+
+    restart: always
+
+    env_file:
+      - .env
+
+    volumes:
+      - db_data:/var/lib/mysql
+
+    networks:
+      - my-docker-network
+
+networks:
+  my-docker-network:
+
+#https://kinsta.com/blog/docker-compose-volumes/
+volumes:
+  web_data:
+    driver_opts:
+      type: local
+      device: /home/zlazrak/data/wp
+      o: bind
+  db_data:
+    driver_opts:
+      type: local
+      device: /home/zlazrak/data/db
+      o: bind
